@@ -1,0 +1,1 @@
+Built from https://github.com/limonabisi/linux-gta4l (branch gta4l-7.2, cf5f763f0), arch/arm64/boot/dts/qcom/sm6115-samsung-gta4l.dts
