@@ -69,9 +69,7 @@ APRIORI DXE {
   INF Binaries/gta4l/QcomPkg/Drivers/UsbPwrCtrlDxe/UsbPwrCtrlDxe.inf
   INF Binaries/gta4l/QcomPkg/Drivers/QcomChargerDxe/QcomChargerDxeLA.inf
   INF Binaries/gta4l/QcomPkg/Drivers/ChargerExDxe/ChargerExDxe.inf
-  # UsbfnDwc3Dxe left out: binding it (connect -r, Setup) turns the port
-  # into device mode and drops the USB keyboard
-  #INF Binaries/gta4l/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
+  INF Binaries/gta4l/QcomPkg/Drivers/UsbfnDwc3Dxe/UsbfnDwc3Dxe.inf
   INF Binaries/generic/QcomPkg/Drivers/XhciPciEmulationDxe/XhciPciEmulationDxe.inf
   INF Binaries/generic/QcomPkg/Drivers/XhciDxe/XhciDxe.inf
 
