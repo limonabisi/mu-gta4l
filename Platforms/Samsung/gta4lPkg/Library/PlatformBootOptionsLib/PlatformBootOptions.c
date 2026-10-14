@@ -112,6 +112,32 @@ RegisterSerialConsole (VOID)
   FreePool (Handles);
 }
 
+/*
+ * Any USB keyboard (class 3, subclass 1, protocol 1) is a console input,
+ * so ConPlatform hands it to the console when it is plugged in.
+ */
+#pragma pack(1)
+typedef struct {
+  USB_CLASS_DEVICE_PATH     Keyboard;
+  EFI_DEVICE_PATH_PROTOCOL  End;
+} USB_KEYBOARD_DEVICE_PATH;
+#pragma pack()
+
+STATIC USB_KEYBOARD_DEVICE_PATH mUsbKeyboard = {
+  {
+    { MESSAGING_DEVICE_PATH, MSG_USB_CLASS_DP, { sizeof (USB_CLASS_DEVICE_PATH), 0 } },
+    0xFFFF, 0xFFFF, 3, 1, 1
+  },
+  { END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, { sizeof (EFI_DEVICE_PATH_PROTOCOL), 0 } }
+};
+
+STATIC
+VOID
+RegisterUsbKeyboard (VOID)
+{
+  EfiBootManagerUpdateConsoleVariable (ConIn, (EFI_DEVICE_PATH_PROTOCOL *)&mUsbKeyboard, NULL);
+}
+
 VOID
 GetPlatformBootOptions (
   OUT EFI_PLATFORM_BOOT_OPTION **BootOption,
@@ -121,6 +147,7 @@ GetPlatformBootOptions (
 
   RegisterShellFirst ();
   RegisterSerialConsole ();
+  RegisterUsbKeyboard ();
 
   LocalBootOption = AllocateZeroPool (sizeof (EFI_PLATFORM_BOOT_OPTION));
   if (LocalBootOption == NULL) {

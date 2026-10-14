@@ -1,8 +1,11 @@
 @echo -off
 echo "gta4l: diagnostics"
 ver
-map -r
 drivers
-devices
+echo "gta4l: plug the keyboard in now, 15 s"
+stall 15000000
+connect -r
 dh -p UsbIo
-echo "gta4l: done"
+dh -p SimpleTextIn
+dmpstore ConIn
+echo "gta4l: done, type on the keyboard"
