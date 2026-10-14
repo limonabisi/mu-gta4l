@@ -31,6 +31,12 @@
 
 [PcdsFixedAtBuild]
   #
+  # Connect every console input (USB keyboards too) before the boot timeout,
+  # so the Esc / F2 hotkeys work
+  #
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConInConnectOnDemand|FALSE
+
+  #
   # DDR Memory
   #
   gArmTokenSpaceGuid.PcdSystemMemoryBase|0x40000000
@@ -79,6 +85,18 @@
   PlatformBootOptionsLib|gta4lPkg/Library/PlatformBootOptionsLib/PlatformBootOptionsLib.inf
 
   #
+  # Boot Manager: Vol+/Esc Boot Menu, Vol-/F2 Setup, Power = Enter
+  #
+  PlatformBootManagerLib|gta4lPkg/Library/BootManagerLib/BootManagerLib.inf
+
+  #
+  # Setup (UiApp) and ext4
+  #
+  CustomizedDisplayLib|MdeModulePkg/Library/CustomizedDisplayLib/CustomizedDisplayLib.inf
+  FileExplorerLib|MdeModulePkg/Library/FileExplorerLib/FileExplorerLib.inf
+  BaseUcs2Utf8Lib|Ext4Pkg/Library/BaseUcs2Utf8Lib/BaseUcs2Utf8Lib.inf
+
+  #
   # UEFI Shell
   #
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
@@ -92,6 +110,22 @@
   # ACPI Tables
   #
   #gta4l/AcpiTables.inf
+
+  #
+  # Setup: front page with Device Manager, Boot Manager, Boot Maintenance
+  #
+  MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
+  MdeModulePkg/Application/UiApp/UiApp.inf {
+    <LibraryClasses>
+      NULL|MdeModulePkg/Library/DeviceManagerUiLib/DeviceManagerUiLib.inf
+      NULL|MdeModulePkg/Library/BootManagerUiLib/BootManagerUiLib.inf
+      NULL|MdeModulePkg/Library/BootMaintenanceManagerUiLib/BootMaintenanceManagerUiLib.inf
+  }
+
+  #
+  # ext4, to load Linux from the postmarketOS boot partition
+  #
+  Ext4Pkg/Ext4Dxe/Ext4Dxe.inf
 
   #
   # Shell on the debug UART, and startup.nsh read from the firmware volume

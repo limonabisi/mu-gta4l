@@ -104,6 +104,11 @@ READ_LOCK_STATUS   = TRUE
     SECTION UI = "Device Tree"
   }
 
+  # Setup (F2 / Vol-) and ext4
+  INF MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
+  INF MdeModulePkg/Application/UiApp/UiApp.inf
+  INF Ext4Pkg/Ext4Dxe/Ext4Dxe.inf
+
   # UEFI Shell, opened at start, also on the UART; runs startup.nsh from here
   INF ShellPkg/Application/Shell/Shell.inf
   INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf

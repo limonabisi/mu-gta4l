@@ -1,0 +1,3 @@
+Ext4Dxe:         tianocore/edk2-platforms Features/Ext4Pkg @ 013fca79e55c7ac4f3d0eaf23799a9a73ed43dba
+BaseUcs2Utf8Lib: tianocore/edk2 RedfishPkg @ ee395b416b5b954259e30570d6cfe93061a98346
+Both BSD-2-Clause-Patent. The library is bundled so Ext4Dxe builds without RedfishPkg.
