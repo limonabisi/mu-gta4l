@@ -16,9 +16,21 @@ Fork of [Project-Silicium/Mu-Silicium](https://github.com/Project-Silicium/Mu-Si
 
 ## Status
 
-Not yet tested on the tablet. From the upstream status page: display,
-internal storage and USB host work; power key, SD card and USB device mode do
-not. Without a power key, use `reset` (reboot) or `reset -s` (power off) in the
+| Feature            | Description                                              | State |
+|:-------------------|:---------------------------------------------------------|:-----:|
+| Display            |                                                          | ✅    |
+| Internal Storage   |                                                          | ✅    |
+| Side Buttons       | Only Volume Buttons                                      | ⚠️    |
+| USB Host Mode      |                                                          | ✅    |
+| USB Device Mode    |                                                          | ❌    |
+| USB Power Delivery |                                                          | ✅    |
+| Mass Storage       | Reboots                                                  | ❌    |
+| SD Card            |                                                          | ❌    |
+| Windows Boot       |                                                          | ❌    |
+| Linux Boot         | Device tree added in this fork, not tested yet            | ⚠️    |
+| UEFI Shell         | Added in this fork, opens at start; not tested yet        | ⚠️    |
+
+Without a power key, use `reset` (reboot) or `reset -s` (power off) in the
 Shell.
 
 ## Flash

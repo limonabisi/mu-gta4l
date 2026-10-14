@@ -5233,7 +5233,7 @@
 | Mass Storage       | Reboots                  | ❌    |
 | SD Card            |                          | ❌    |
 | Windows Boot       |                          | ❌    |
-| Linux Boot         |                          | ❌    |
+| Linux Boot         | Device Tree added, untested | ⚠️    |
 
 </details>
 
