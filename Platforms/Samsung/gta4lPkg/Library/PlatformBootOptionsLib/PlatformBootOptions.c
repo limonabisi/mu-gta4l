@@ -6,6 +6,9 @@
  */
 #include <Uefi.h>
 #include <Guid/FileInfo.h>
+#include <Guid/PcAnsi.h>
+#include <Protocol/SerialIo.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -68,6 +71,47 @@ RegisterShellFirst (VOID)
   EfiBootManagerFreeLoadOptions (Options, Count);
 }
 
+/*
+ * Put the UART on the console too (VT100+, 115200 8N1), so the Shell can be
+ * used from a serial terminal when no keyboard works.
+ */
+STATIC
+VOID
+RegisterSerialConsole (VOID)
+{
+  EFI_STATUS                Status;
+  EFI_HANDLE               *Handles = NULL;
+  UINTN                     Count   = 0;
+  UINTN                     Index;
+  EFI_DEVICE_PATH_PROTOCOL *Path;
+  VENDOR_DEVICE_PATH        Terminal;
+
+  Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSerialIoProtocolGuid, NULL, &Count, &Handles);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_WARN, "%a: No serial port! Status = %r\n", __FUNCTION__, Status));
+    return;
+  }
+
+  Terminal.Header.Type    = MESSAGING_DEVICE_PATH;
+  Terminal.Header.SubType = MSG_VENDOR_DP;
+  SetDevicePathNodeLength (&Terminal.Header, sizeof (VENDOR_DEVICE_PATH));
+  CopyGuid (&Terminal.Guid, &gEfiVT100PlusGuid);
+
+  for (Index = 0; Index < Count; Index++) {
+    Path = AppendDevicePathNode (DevicePathFromHandle (Handles[Index]), (EFI_DEVICE_PATH_PROTOCOL *)&Terminal);
+    if (Path == NULL) {
+      continue;
+    }
+
+    EfiBootManagerUpdateConsoleVariable (ConIn,  Path, NULL);
+    EfiBootManagerUpdateConsoleVariable (ConOut, Path, NULL);
+    EfiBootManagerUpdateConsoleVariable (ErrOut, Path, NULL);
+    FreePool (Path);
+  }
+
+  FreePool (Handles);
+}
+
 VOID
 GetPlatformBootOptions (
   OUT EFI_PLATFORM_BOOT_OPTION **BootOption,
@@ -76,6 +120,7 @@ GetPlatformBootOptions (
   EFI_PLATFORM_BOOT_OPTION *LocalBootOption;
 
   RegisterShellFirst ();
+  RegisterSerialConsole ();
 
   LocalBootOption = AllocateZeroPool (sizeof (EFI_PLATFORM_BOOT_OPTION));
   if (LocalBootOption == NULL) {

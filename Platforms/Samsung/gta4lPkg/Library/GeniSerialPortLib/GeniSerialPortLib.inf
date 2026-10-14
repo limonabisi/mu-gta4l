@@ -1,0 +1,16 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = GeniSerialPortLib
+  FILE_GUID                      = 6C1D4E2A-93B7-4F05-8A61-2E7C9B4D1F38
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SerialPortLib
+
+[Sources]
+  GeniSerialPortLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  IoLib

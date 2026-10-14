@@ -94,6 +94,16 @@
   #gta4l/AcpiTables.inf
 
   #
+  # Shell on the debug UART, and startup.nsh read from the firmware volume
+  #
+  MdeModulePkg/Universal/SerialDxe/SerialDxe.inf {
+    <LibraryClasses>
+      SerialPortLib|gta4lPkg/Library/GeniSerialPortLib/GeniSerialPortLib.inf
+  }
+  MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+  MdeModulePkg/Universal/FvSimpleFileSystemDxe/FvSimpleFileSystemDxe.inf
+
+  #
   # UEFI Shell
   #
   ShellPkg/Application/Shell/Shell.inf {

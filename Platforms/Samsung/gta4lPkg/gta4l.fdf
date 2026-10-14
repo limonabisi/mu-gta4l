@@ -104,8 +104,15 @@ READ_LOCK_STATUS   = TRUE
     SECTION UI = "Device Tree"
   }
 
-  # UEFI Shell, opened at start
+  # UEFI Shell, opened at start, also on the UART; runs startup.nsh from here
   INF ShellPkg/Application/Shell/Shell.inf
+  INF MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
+  INF MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
+  INF MdeModulePkg/Universal/FvSimpleFileSystemDxe/FvSimpleFileSystemDxe.inf
+  FILE FREEFORM = 8A3C6E21-5D4B-4F17-B9E2-0C7A1D5F3B64 {
+    SECTION UI = "startup.nsh"
+    SECTION RAW = gta4lPkg/startup.nsh
+  }
 
   !include QcomPkg/Extra.fdf.inc
 

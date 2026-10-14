@@ -17,6 +17,7 @@
   QcomPkg/QcomPkg.dec
 
 [LibraryClasses]
+  BaseMemoryLib
   DebugLib
   DevicePathLib
   MemoryAllocationLib
@@ -27,9 +28,11 @@
 
 [Guids]
   gUefiShellFileGuid
+  gEfiVT100PlusGuid
 
 [Protocols]
   gEfiLoadedImageProtocolGuid
+  gEfiSerialIoProtocolGuid
 
 [FixedPcd]
   gQcomPkgTokenSpaceGuid.PcdMassStorageFile
