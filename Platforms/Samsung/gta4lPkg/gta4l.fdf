@@ -104,6 +104,9 @@ READ_LOCK_STATUS   = TRUE
     SECTION UI = "Device Tree"
   }
 
+  # UEFI Shell, opened at start
+  INF ShellPkg/Application/Shell/Shell.inf
+
   !include QcomPkg/Extra.fdf.inc
 
 [FV.FVMAIN_COMPACT]
