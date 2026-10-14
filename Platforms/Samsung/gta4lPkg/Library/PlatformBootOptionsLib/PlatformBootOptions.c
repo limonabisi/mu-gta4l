@@ -18,6 +18,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Protocol/LoadedImage.h>
+#include <Protocol/DriverBinding.h>
 
 extern EFI_GUID gUefiShellFileGuid;
 
@@ -138,6 +139,63 @@ RegisterUsbKeyboard (VOID)
   EfiBootManagerUpdateConsoleVariable (ConIn, (EFI_DEVICE_PATH_PROTOCOL *)&mUsbKeyboard, NULL);
 }
 
+/*
+ * UsbfnDwc3Dxe (USB device mode) has to load, the host side needs it, but
+ * when it binds to the controller (connect -r, Setup's connect-all) the port
+ * leaves host mode and the USB keyboard drops off. Make its driver binding
+ * refuse every controller.
+ */
+STATIC EFI_GUID mUsbfnDwc3FileGuid = { 0x94F8A6A7, 0xDC34, 0x4101, { 0x88, 0xC1, 0x99, 0x17, 0x9C, 0xCE, 0xAE, 0x83 } };
+
+STATIC
+EFI_STATUS
+EFIAPI
+UsbfnNeverSupported (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   ControllerHandle,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+STATIC
+VOID
+BlockUsbfnBinding (VOID)
+{
+  EFI_STATUS                   Status;
+  EFI_HANDLE                  *Handles = NULL;
+  UINTN                        Count   = 0;
+  UINTN                        Index;
+  EFI_DRIVER_BINDING_PROTOCOL *Binding;
+  EFI_LOADED_IMAGE_PROTOCOL   *Image;
+  EFI_DEVICE_PATH_PROTOCOL    *Node;
+  EFI_GUID                    *Name;
+
+  Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiDriverBindingProtocolGuid, NULL, &Count, &Handles);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  for (Index = 0; Index < Count; Index++) {
+    if (EFI_ERROR (gBS->HandleProtocol (Handles[Index], &gEfiDriverBindingProtocolGuid, (VOID **)&Binding)) ||
+        EFI_ERROR (gBS->HandleProtocol (Binding->ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **)&Image)) ||
+        Image->FilePath == NULL) {
+      continue;
+    }
+
+    for (Node = Image->FilePath; !IsDevicePathEnd (Node); Node = NextDevicePathNode (Node)) {
+      Name = EfiGetNameGuidFromFwVolDevicePathNode ((MEDIA_FW_VOL_FILEPATH_DEVICE_PATH *)Node);
+      if (Name != NULL && CompareGuid (Name, &mUsbfnDwc3FileGuid)) {
+        Binding->Supported = UsbfnNeverSupported;
+        DEBUG ((EFI_D_WARN, "%a: UsbfnDwc3Dxe kept off the USB controller\n", __FUNCTION__));
+      }
+    }
+  }
+
+  FreePool (Handles);
+}
+
 VOID
 GetPlatformBootOptions (
   OUT EFI_PLATFORM_BOOT_OPTION **BootOption,
@@ -145,6 +203,7 @@ GetPlatformBootOptions (
 {
   EFI_PLATFORM_BOOT_OPTION *LocalBootOption;
 
+  BlockUsbfnBinding ();
   RegisterShellFirst ();
   RegisterSerialConsole ();
   RegisterUsbKeyboard ();
