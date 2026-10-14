@@ -18,6 +18,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Protocol/LoadedImage.h>
+#include <Protocol/BlockIo.h>
 
 extern EFI_GUID gUefiShellFileGuid;
 
@@ -138,6 +139,30 @@ RegisterUsbKeyboard (VOID)
   EfiBootManagerUpdateConsoleVariable (ConIn, (EFI_DEVICE_PATH_PROTOCOL *)&mUsbKeyboard, NULL);
 }
 
+/*
+ * Connect the storage only (partitions, FAT, ext4) so the Shell sees the
+ * postmarketOS boot partition. A connect-all would also touch the USB
+ * controller and drop the keyboard.
+ */
+STATIC
+VOID
+ConnectStorage (VOID)
+{
+  EFI_HANDLE *Handles = NULL;
+  UINTN       Count   = 0;
+  UINTN       Index;
+
+  if (EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &Count, &Handles))) {
+    return;
+  }
+
+  for (Index = 0; Index < Count; Index++) {
+    gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+  }
+
+  FreePool (Handles);
+}
+
 VOID
 GetPlatformBootOptions (
   OUT EFI_PLATFORM_BOOT_OPTION **BootOption,
@@ -145,6 +170,7 @@ GetPlatformBootOptions (
 {
   EFI_PLATFORM_BOOT_OPTION *LocalBootOption;
 
+  ConnectStorage ();
   RegisterShellFirst ();
   RegisterSerialConsole ();
   RegisterUsbKeyboard ();

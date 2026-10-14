@@ -33,6 +33,7 @@
 [Protocols]
   gEfiLoadedImageProtocolGuid
   gEfiSerialIoProtocolGuid
+  gEfiBlockIoProtocolGuid
 
 [FixedPcd]
   gQcomPkgTokenSpaceGuid.PcdMassStorageFile
