@@ -93,16 +93,16 @@ READ_LOCK_STATUS   = TRUE
   INF SiliciumPkg/Drivers/SmBiosTableDxe/SmBiosTableDxe.inf
 
   # ACPI
-  #INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
-  #INF MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
-  #INF RuleOverride = ACPITABLE gta4l/AcpiTables.inf
+  INF MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+  INF MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
+  !include Include/ACPI.inc
 
   # Device Tree
-  INF EmbeddedPkg/Drivers/DtPlatformDxe/DtPlatformDxe.inf
-  FILE FREEFORM = 25462CDA-221F-47DF-AC1D-259CFAA4E326 {
-    SECTION RAW = gta4lPkg/FdtBlob/sm6115-samsung-gta4l.dtb
-    SECTION UI = "Device Tree"
-  }
+  #INF EmbeddedPkg/Drivers/DtPlatformDxe/DtPlatformDxe.inf
+  #FILE FREEFORM = 25462CDA-221F-47DF-AC1D-259CFAA4E326 {
+  #  SECTION RAW = gta4lPkg/FdtBlob/sm6115-samsung-gta4l.dtb
+  #  SECTION UI = "Device Tree"
+  #}
 
   # Setup (F2 / Vol-) and ext4
   INF MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
