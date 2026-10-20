@@ -52,3 +52,6 @@
   gKeypadDeviceProtocolGuid
   gEfiGraphicsOutputProtocolGuid
   gEfiSimpleTextInputExProtocolGuid
+  gEfiBlockIoProtocolGuid
+  gEfiFirmwareVolume2ProtocolGuid
+  gEfiUsbIoProtocolGuid

@@ -31,6 +31,11 @@
 
 [PcdsFixedAtBuild]
   #
+  # DEBUG: keep the log, but do not halt on asserts from the Qualcomm binaries
+  #
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2E
+
+  #
   # Connect every console input (USB keyboards too) before the boot timeout,
   # so the Esc / F2 hotkeys work
   #
@@ -69,6 +74,11 @@
   gQcomPkgTokenSpaceGuid.PcdPlatformType|"LA"
 
 [LibraryClasses]
+  #
+  # Debug output on the GENI UART instead of the screen
+  #
+  SerialPortLib|gta4lPkg/Library/GeniSerialPortLib/GeniSerialPortLib.inf
+
   #
   # Memory Libraries
   #

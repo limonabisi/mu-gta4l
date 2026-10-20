@@ -21,7 +21,10 @@
 #include <Library/DevicePathLib.h>
 #include <Library/UefiBootManagerLib.h>
 #include <Library/UefiLib.h>
+#include <Protocol/BlockIo.h>
+#include <Protocol/FirmwareVolume2.h>
 #include <Protocol/LoadedImage.h>
+#include <Protocol/UsbIo.h>
 
 #include <Configuration/BootDevices.h>
 
@@ -38,6 +41,94 @@ STATIC UINTN YPos = 0;
 //
 STATIC CONST CHAR8 *ComboMessage = "[Vol+ / Esc] Boot Menu    [Vol- / F2] Setup";
 
+//
+// QCOM_USB_CONFIG_PROTOCOL GUID (E722B03F-B250-42CE-8EBD-5BD51812D037)
+//
+STATIC EFI_GUID mQcomUsbConfigProtocolGuid = {
+  0xE722B03F, 0xB250, 0x42CE, { 0x8E, 0xBD, 0x5B, 0xD5, 0x18, 0x12, 0xD0, 0x37 }
+};
+
+typedef
+EFI_STATUS
+(EFIAPI *QCOM_USB_ENABLE_VBUS) (
+  IN VOID    *This,
+  IN UINT32   CoreNum
+  );
+
+/*
+ * Connect all handles that carry the given protocol.
+ */
+STATIC
+VOID
+ConnectControllersByProtocol (IN EFI_GUID *ProtocolGuid)
+{
+  EFI_HANDLE *Handles = NULL;
+  UINTN       Count   = 0;
+  UINTN       Index;
+
+  if (EFI_ERROR (gBS->LocateHandleBuffer (ByProtocol, ProtocolGuid, NULL, &Count, &Handles))) {
+    return;
+  }
+
+  for (Index = 0; Index < Count; Index++) {
+    gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
+  }
+
+  FreePool (Handles);
+}
+
+/*
+ * Switch the Qualcomm USB controller on gta4l from peripheral-only static
+ * configuration (modeType = 4 on platform 0x1D) to XHCI host mode
+ * (modeType = 1, initMode = 8), enable 5V OTG VBUS, and signal
+ * gUsbControllerInitGuid via DeviceBootManagerOnDemandConInConnect() so
+ * XhciPciEmulation, XhciDxe, UsbBusDxe, and UsbKbDxe enumerate OTG devices
+ * before BdsDxe connects the default consoles.
+ */
+STATIC
+VOID
+StartUsbHost (VOID)
+{
+  EFI_STATUS            Status;
+  VOID                 *UsbConfigProtocol = NULL;
+  UINT8                *Dev;
+  VOID                 *UsbCoreIfc;
+  QCOM_USB_ENABLE_VBUS  EnableVbus;
+
+  Status = gBS->LocateProtocol (&mQcomUsbConfigProtocolGuid, NULL, &UsbConfigProtocol);
+  if (!EFI_ERROR (Status) && UsbConfigProtocol != NULL) {
+    Dev = (UINT8 *)UsbConfigProtocol - 0x100;
+
+    // Verify gUsbConfigDevice[0] signature ('usbc')
+    if (*(UINT32 *)Dev == SIGNATURE_32 ('u', 's', 'b', 'c')) {
+      UsbCoreIfc = *(VOID **)(Dev + 0x18);
+      if (UsbCoreIfc != NULL) {
+        *(UINT32 *)UsbCoreIfc = 8; // USB_HOST_MODE
+      }
+
+      Dev[0xD0]               = 1; // EnableStaticCfg = TRUE
+      *(UINT32 *)(Dev + 0xD4) = 1; // USB_HOST_MODE_XHCI
+
+      // Prevent UsbConfigLibExitBootService (0x39b4) from putting USB into LPM on ExitBootServices
+      // so Windows PE (usbxhci.sys) and Linux keep XHCI clocks and 5V OTG VBUS active
+      *(Dev - 0x4DDC)         = 1;
+    }
+
+    // Allow Usb30EnableVbus / Usb30GetVbusSt to call UsbPwrCtrlDxe on platform 0x1D
+    if (*(UINT32 *)((UINT8 *)UsbConfigProtocol + 0x268) == 0x1D) {
+      *(UINT32 *)((UINT8 *)UsbConfigProtocol + 0x268) = 0x0B;
+    }
+
+    EnableVbus = *(QCOM_USB_ENABLE_VBUS *)((UINT8 *)UsbConfigProtocol + 0x98);
+    if (EnableVbus != NULL) {
+      EnableVbus (UsbConfigProtocol, 0);
+    }
+  }
+
+  // Signal gUsbControllerInitGuid (skipped by BdsDxe when PcdConInConnectOnDemand is FALSE)
+  DeviceBootManagerOnDemandConInConnect ();
+}
+
 VOID
 EFIAPI
 PlatformBootManagerBeforeConsole ()
@@ -47,6 +138,12 @@ PlatformBootManagerBeforeConsole ()
 
   // Dispatch Deferred Images
   EfiBootManagerDispatchDeferredImages ();
+
+  // Start USB Host Mode (XHCI) and trigger early SD card initialization
+  StartUsbHost ();
+  DeviceBootManagerAfterConsole (); // Signals gSdCardInitGuid early so SdccDxe powers up SD card during console setup
+  ConnectControllersByProtocol (&gEfiFirmwareVolume2ProtocolGuid);
+  ConnectControllersByProtocol (&gEfiUsbIoProtocolGuid);
 
   // Register Boot Options
   MsBootOptionsLibRegisterDefaultBootOptions ();
@@ -126,8 +223,16 @@ PlatformBootManagerAfterConsole ()
     YPos = ScreenHeight * 48 / 50;
   }
 
-  // Execute Secondary After Console
-  DeviceBootManagerAfterConsole ();
+  // gSdCardInitGuid was already signalled in PlatformBootManagerBeforeConsole;
+  // give SdccDxe time to finish card identification (CMD0/CMD8/ACMD41)
+  gBS->Stall (100000);
+
+  // Pass 1: Connect raw disk devices (SD card, USB mass storage, eMMC)
+  ConnectControllersByProtocol (&gEfiBlockIoProtocolGuid);
+  // Pass 2: Connect partition handles produced by PartitionDxe to filesystem drivers
+  ConnectControllersByProtocol (&gEfiBlockIoProtocolGuid);
+  ConnectControllersByProtocol (&gEfiFirmwareVolume2ProtocolGuid);
+  ConnectControllersByProtocol (&gEfiUsbIoProtocolGuid);
 }
 
 VOID
